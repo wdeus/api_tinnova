@@ -1,5 +1,7 @@
 package com.tinnova.avaliacao.controller;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,8 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tinnova.avaliacao.dto.DadosAtualizacaoVeiculo;
 import com.tinnova.avaliacao.dto.DadosVeiculo;
+import com.tinnova.avaliacao.dto.VeiculoPorDecada;
+import com.tinnova.avaliacao.dto.VeiculoPorFabricante;
 import com.tinnova.avaliacao.model.Veiculo;
+import com.tinnova.avaliacao.repository.VeiculoCustomRepository;
 import com.tinnova.avaliacao.repository.VeiculoRepository;
+import com.tinnova.avaliacao.service.VeiculoService;
 
 @RestController
 @RequestMapping("veiculos")
@@ -27,6 +33,11 @@ public class VeiculoController {
 
 	@Autowired
 	private VeiculoRepository repository;
+	
+	@Autowired
+	private VeiculoCustomRepository repositoryCustom;
+	
+	private VeiculoService service = new VeiculoService();
 	
 	@GetMapping
 	public List<Veiculo> listarTodosVeiculos(@RequestParam(value="marca" , required = false) String marca, @RequestParam(value="ano", required = false) Integer ano ){
@@ -48,12 +59,40 @@ public class VeiculoController {
 	@PatchMapping("/{id}")
 	@Transactional
 	public void alterarVeiculoParcialmente(@PathVariable Long id, @RequestBody DadosAtualizacaoVeiculo dadosAtualizacaoVeiculo) {
-		var veiculo = repository.getReferenceById(id);
-		//pendente
+		Veiculo veiculo = repository.getReferenceById(id);
+		veiculo = service.atualizarVeiculoParcialmente(veiculo, dadosAtualizacaoVeiculo);
+	}
+	
+	@PutMapping("/{id}")
+	@Transactional
+	public void alterarVeiculo(@PathVariable Long id, @RequestBody DadosVeiculo dadosVeiculo) {
+		Veiculo veiculo = repository.getReferenceById(id);
+		veiculo = service.atualizarVeiculo(veiculo, dadosVeiculo);
 	}
 	
 	@DeleteMapping("/{id}")
 	public void excluir(@PathVariable Long id) {
 		repository.deleteById(id);
 	}	
+	
+	@GetMapping("/veiculosPorFabricante")
+	public List<VeiculoPorFabricante> getVeiculosPorFabricante(){
+		return repositoryCustom.findVeiculosPorFabricante();
+	}
+	
+	@GetMapping("/veiculosNaoVendidos")
+	public int getQuantidadeVeiculosNaoVendidos() {
+		return repository.findAllByVendidoFalse().size();
+	}
+	
+	@GetMapping("/veiculosPorDecada")
+	public List<VeiculoPorDecada> getVeiculosPorDecada(){
+		return repositoryCustom.findVeiculosPorDecada();
+	}
+	
+	@GetMapping("/veiculosUltimaSemana")
+	public List<String> getCarrosRegistradoUltimaSemana(){
+		return repositoryCustom.findCarrosRegistradosUltimaSemana(Date.valueOf(LocalDate.now().plusDays(-7l)), Date.valueOf(LocalDate.now().plusDays(-1l)));
+	}
+	
 }
