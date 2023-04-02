@@ -2,6 +2,7 @@ package com.tinnova.avaliacao.controller;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,14 +42,19 @@ public class VeiculoController {
 	private VeiculoService service = new VeiculoService();
 	
 	@GetMapping
-	public List<Veiculo> listarTodosVeiculos(@RequestParam(value="marca" , required = false) String marca, @RequestParam(value="ano", required = false) Integer ano ){
-		if(marca == null || ano == null) return repository.findAll();
-		return repository.findByMarcaAndAno(marca, ano);
+	public ResponseEntity<List<Veiculo>> listarTodosVeiculos(@RequestParam(value="marca" , required = false) String marca, @RequestParam(value="ano", required = false) Integer ano ){
+		List<Veiculo> retorno = new ArrayList<Veiculo>();
+		if (marca != null && ano != null)
+			retorno = repository.findByMarcaAndAno(marca, ano);
+		retorno = repository.findAll();
+		
+		return ResponseEntity.ok(retorno);
 	}
 	
 	@GetMapping("/{id}")
-	public Optional<Veiculo> listarVeiculoPorId(@PathVariable Long id){
-		return repository.findById(id);
+	public ResponseEntity<Optional<Veiculo>> listarVeiculoPorId(@PathVariable Long id){
+		var retorno = repository.findById(id);
+		return ResponseEntity.ok(retorno);
 	}
 	
 	@PostMapping
@@ -58,7 +64,7 @@ public class VeiculoController {
 			Veiculo veiculo = new Veiculo();
 			veiculo = service.salvarVeiculo(veiculo, dadosVeiculo);
 			repository.save(veiculo);
-			return ResponseEntity.ok(veiculo);
+			return ResponseEntity.ok(veiculo.getId());
 		} catch(IllegalArgumentException e) {
 			e.printStackTrace();
 			return ResponseEntity.badRequest().body(e.getMessage());
@@ -68,41 +74,48 @@ public class VeiculoController {
 	
 	@PatchMapping("/{id}")
 	@Transactional
-	public void alterarVeiculoParcialmente(@PathVariable Long id, @RequestBody DadosAtualizacaoVeiculo dadosAtualizacaoVeiculo) {
+	public ResponseEntity alterarVeiculoParcialmente(@PathVariable Long id, @RequestBody DadosAtualizacaoVeiculo dadosAtualizacaoVeiculo) {
 		Veiculo veiculo = repository.getReferenceById(id);
 		veiculo = service.atualizarVeiculoParcialmente(veiculo, dadosAtualizacaoVeiculo);
+		return ResponseEntity.ok(veiculo.getId());
 	}
 	
 	@PutMapping("/{id}")
 	@Transactional
-	public void alterarVeiculo(@PathVariable Long id, @RequestBody DadosVeiculo dadosVeiculo) {
+	public ResponseEntity alterarVeiculo(@PathVariable Long id, @RequestBody DadosVeiculo dadosVeiculo) {
 		Veiculo veiculo = repository.getReferenceById(id);
 		veiculo = service.atualizarVeiculo(veiculo, dadosVeiculo);
+		return ResponseEntity.ok(veiculo.getId());
 	}
 	
 	@DeleteMapping("/{id}")
-	public void excluir(@PathVariable Long id) {
+	public ResponseEntity excluir(@PathVariable Long id) {
 		repository.deleteById(id);
+		return ResponseEntity.noContent().build();
 	}	
 	
 	@GetMapping("/veiculosPorFabricante")
-	public List<VeiculoPorFabricante> getVeiculosPorFabricante(){
-		return repositoryCustom.findVeiculosPorFabricante();
+	public ResponseEntity<List<VeiculoPorFabricante>> getVeiculosPorFabricante(){
+		var retorno = repositoryCustom.findVeiculosPorFabricante();
+		return ResponseEntity.ok(retorno);
 	}
 	
 	@GetMapping("/veiculosNaoVendidos")
-	public int getQuantidadeVeiculosNaoVendidos() {
-		return repository.findAllByVendidoFalse().size();
+	public ResponseEntity<Integer> getQuantidadeVeiculosNaoVendidos() {
+		var retorno = repository.findAllByVendidoFalse().size();
+		return ResponseEntity.ok(retorno);
 	}
 	
 	@GetMapping("/veiculosPorDecada")
-	public List<VeiculoPorDecada> getVeiculosPorDecada(){
-		return repositoryCustom.findVeiculosPorDecada();
+	public ResponseEntity<List<VeiculoPorDecada>> getVeiculosPorDecada(){
+		var retorno = repositoryCustom.findVeiculosPorDecada();
+		return ResponseEntity.ok(retorno);
 	}
 	
 	@GetMapping("/veiculosUltimaSemana")
-	public List<String> getCarrosRegistradoUltimaSemana(){
-		return repositoryCustom.findCarrosRegistradosUltimaSemana(Date.valueOf(LocalDate.now().plusDays(-7l)), Date.valueOf(LocalDate.now().plusDays(-1l)));
+	public ResponseEntity<List<String>> getCarrosRegistradoUltimaSemana(){
+		var retorno = repositoryCustom.findCarrosRegistradosUltimaSemana(Date.valueOf(LocalDate.now().plusDays(-7l)), Date.valueOf(LocalDate.now().plusDays(-1l)));
+		return ResponseEntity.ok(retorno);
 	}
 	
 }
